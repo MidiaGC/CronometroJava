@@ -8,7 +8,8 @@ public class Cronometro extends JFrame
     private JLabel tempoLabel;
     private JButton iniciarButton, pausarButton, resetarButton;
     private Timer timer;
-    private int horas = 0, minutos = 0, segundos = 0, milisegundos = 0;
+    private long startTime;
+    private long elapsedTime;
     private boolean rodando = false;
 
     public Cronometro()
@@ -68,8 +69,8 @@ public class Cronometro extends JFrame
         buttonPanel.add(resetarButton);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Configuração do timer (atualização a cada 10 milisegundos)
-        timer = new Timer(10, new ActionListener()
+        // Configuração do timer (atualização a cada 1 milisegundo)
+        timer = new Timer(1, new ActionListener()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -79,65 +80,53 @@ public class Cronometro extends JFrame
         });
 
         setVisible(true);
-
-        }
+    }
 
     private void iniciar()
+    {
+        if (!rodando)
         {
-            if (!rodando)
-            {
-                rodando = true;
-                timer.start();
-            }
+            rodando = true;
+            startTime = System.nanoTime() - elapsedTime;
+            timer.start();
         }
+    }
 
     private void pausar()
+    {
+        if (rodando) 
         {
-            if (rodando) 
-            {
-                rodando = false;
-                timer.stop();
-            }
+            rodando = false;
+            timer.stop();
+            elapsedTime = System.nanoTime() - startTime;
         }
+    }
 
     private void resetar()
-        {
-            timer.stop();
-            rodando = false;
-            horas = 0;
-            minutos = 0;
-            segundos = 0;
-            milisegundos = 0;
-            atualizarDisplay();
-        }
+    {
+        timer.stop();
+        rodando = false;
+        elapsedTime = 0;
+        atualizarDisplay();
+    }
 
     private void atualizarTempo()
     {
-        milisegundos += 10;
-
-        if (milisegundos >= 1000) 
+        if (rodando)
         {
-            segundos++;
-            milisegundos = 0;
-
-            if (segundos >= 60)
-            {
-                minutos++;
-                segundos = 0;
-
-                if (minutos >= 60)
-                {
-                    horas++;
-                    minutos = 0;
-                }
-            }
+            elapsedTime = System.nanoTime() - startTime;
+            atualizarDisplay();
         }
-
-        atualizarDisplay();
     }
 
     private void atualizarDisplay()
     {
+        long totalMillis = elapsedTime / 1_000_000; // Convert nanoseconds to milliseconds
+        long horas = totalMillis / (60 * 60 * 1000);
+        long minutos = (totalMillis % (60 * 60 * 1000)) / (60 * 1000);
+        long segundos = (totalMillis % (60 * 1000)) / 1000;
+        long milisegundos = totalMillis % 1000;
+
         String tempo = String.format("%02d:%02d:%02d:%03d", horas, minutos, segundos, milisegundos);
         tempoLabel.setText(tempo);
     }
@@ -150,8 +139,6 @@ public class Cronometro extends JFrame
                 {
                     new Cronometro();
                 }
-            
         });
     }
-  
 }
